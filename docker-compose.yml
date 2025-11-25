@@ -20,5 +20,13 @@ services:
     depends_on:
       - db
 
+  api_tests:
+    build: .
+    command: python manage.py test
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+
 volumes:
   postgres_data:
