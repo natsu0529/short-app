@@ -5,6 +5,8 @@ services:
       - POSTGRES_DB=sns_db
       - POSTGRES_USER=sns_user
       - POSTGRES_PASSWORD=sns_password
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -20,7 +22,7 @@ services:
 
   api_tests:
     build: .
-    command: python manage.py test
+    command: pytest
     volumes:
       - .:/app
     depends_on:
