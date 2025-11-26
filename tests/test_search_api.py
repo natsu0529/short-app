@@ -1,18 +1,11 @@
 import pytest
 
-from accounts.models import CustomUser
-from post.models import Post
+from .factories import PostFactory, UserFactory
 
 
 @pytest.mark.django_db
 def test_user_search_orders_by_total_likes(api_client, user, another_user):
-    third = CustomUser.objects.create_user(
-        username="user3",
-        password="pass123",
-        email="user3@example.com",
-        user_name="Third User",
-        user_mail="user3@example.com",
-    )
+    third = UserFactory(username="user3")
 
     user.stats.total_likes_received = 5
     user.stats.save()
@@ -40,13 +33,8 @@ def test_user_search_requires_query(api_client):
 
 @pytest.mark.django_db
 def test_post_search_orders_by_like_count(api_client, user):
-    first = Post.objects.create(user=user, context="hello world")
-    first.like_count = 1
-    first.save(update_fields=["like_count"])
-
-    second = Post.objects.create(user=user, context="hello again")
-    second.like_count = 5
-    second.save(update_fields=["like_count"])
+    first = PostFactory(user=user, context="hello world", like_count=1)
+    second = PostFactory(user=user, context="hello again", like_count=5)
 
     response = api_client.get("/api/search/posts/", {"q": "hello"})
 

@@ -3,14 +3,15 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
-from accounts.models import CustomUser
 from follow.models import Follow
 from post.models import Post
+
+from .factories import PostFactory, UserFactory
 
 
 @pytest.mark.django_db
 def test_post_list_returns_created_post(api_client, user):
-    Post.objects.create(user=user, context="first post")
+    PostFactory(user=user, context="first post")
 
     response = api_client.get("/api/posts/")
 
@@ -47,8 +48,8 @@ def test_follow_create_blocks_self_follow(api_client, user):
 
 @pytest.mark.django_db
 def test_timeline_latest_returns_posts_in_order(api_client, user, another_user):
-    old = Post.objects.create(user=user, context="old")
-    new = Post.objects.create(user=another_user, context="new")
+    old = PostFactory(user=user, context="old")
+    new = PostFactory(user=another_user, context="new")
 
     response = api_client.get("/api/timeline/", {"tab": "latest"})
 
@@ -59,18 +60,14 @@ def test_timeline_latest_returns_posts_in_order(api_client, user, another_user):
 
 @pytest.mark.django_db
 def test_timeline_popular_filters_recent_posts_and_orders(api_client, user):
-    within_window_high = Post.objects.create(user=user, context="win high")
-    within_window_high.like_count = 10
-    within_window_high.save(update_fields=["like_count"])
-
-    within_window_low = Post.objects.create(user=user, context="win low")
-    within_window_low.like_count = 2
-    within_window_low.save(update_fields=["like_count"])
-
-    outside_window = Post.objects.create(user=user, context="old popular")
-    outside_window.like_count = 100
-    outside_window.time = timezone.now() - timedelta(hours=30)
-    outside_window.save(update_fields=["like_count", "time"])
+    within_window_high = PostFactory(user=user, context="win high", like_count=10)
+    within_window_low = PostFactory(user=user, context="win low", like_count=2)
+    outside_window = PostFactory(
+        user=user,
+        context="old popular",
+        like_count=100,
+        time=timezone.now() - timedelta(hours=30),
+    )
 
     response = api_client.get("/api/timeline/", {"tab": "popular"})
 
@@ -81,8 +78,8 @@ def test_timeline_popular_filters_recent_posts_and_orders(api_client, user):
 
 @pytest.mark.django_db
 def test_timeline_following_requires_auth(api_client, user, another_user):
-    Post.objects.create(user=another_user, context="followed")
-    Post.objects.create(user=user, context="own")
+    PostFactory(user=another_user, context="followed")
+    PostFactory(user=user, context="own")
     Follow.objects.create(user=user, aim_user=another_user)
 
     response = api_client.get("/api/timeline/", {"tab": "following"})
@@ -98,13 +95,7 @@ def test_timeline_following_requires_auth(api_client, user, another_user):
 
 @pytest.mark.django_db
 def test_user_profile_includes_rank(api_client, user, another_user):
-    third = CustomUser.objects.create_user(
-        username="user3",
-        password="pass123",
-        email="user3@example.com",
-        user_name="User Three",
-        user_mail="user3@example.com",
-    )
+    third = UserFactory(username="user3")
 
     another_user.stats.total_likes_received = 15
     another_user.stats.save()
