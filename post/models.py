@@ -1,10 +1,22 @@
 from django.db import models
+from django.conf import settings
 
 
 # Create your models here.
-class SampleModel(models.Model):
-    name = models.CharField(max_length=100)
-    created_at = models.DateTimeField(auto_now_add=True)
+class Post(models.Model):
+    post_id = models.AutoField(
+        primary_key=True
+    )  # 独自の主キーが欲しい場合。不要なら削除して default id を使う
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts"
+    )
+    context = models.TextField()
+    good = models.IntegerField(default=0)
+    time = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "post"
+        ordering = ["-time"]
 
     def __str__(self):
-        return self.name
+        return f"Post {self.post_id} by {self.user}"
