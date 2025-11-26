@@ -56,3 +56,7 @@ coverage.xml
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Google Cloud
+gcloud/
+gcloud
