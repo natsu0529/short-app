@@ -92,6 +92,7 @@ class FollowSerializer(serializers.ModelSerializer):
             "time",
         ]
         read_only_fields = ["id", "time", "user", "aim_user"]
+        validators = []
 
     def validate(self, attrs):
         request = self.context.get("request")
