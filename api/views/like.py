@@ -39,16 +39,10 @@ class LikeViewSet(
             Post.objects.filter(pk=like.post_id).update(like_count=F("like_count") + 1)
             author_stats = getattr(like.post.user, "stats", None)
             if author_stats:
-                author_stats.total_likes_received = max(
-                    0, author_stats.total_likes_received + 1
-                )
-                author_stats.save(update_fields=["total_likes_received"])
+                author_stats.register_like_received(value=1)
             liker_stats = getattr(self.request.user, "stats", None)
             if liker_stats:
-                liker_stats.total_likes_given = max(
-                    0, liker_stats.total_likes_given + 1
-                )
-                liker_stats.save(update_fields=["total_likes_given"])
+                liker_stats.register_like_given(value=1)
 
     def perform_destroy(self, instance):
         user = self.request.user
@@ -82,6 +76,7 @@ class LikedPostsView(ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = LikedPostsPagination
+    _page_post_ids = None
 
     def get_queryset(self):
         user_id = self.kwargs["user_id"]
@@ -90,6 +85,24 @@ class LikedPostsView(ListAPIView):
             .filter(likes__user_id=user_id)
             .order_by("-likes__created_at", "-time")
         )
+
+    def paginate_queryset(self, queryset):
+        page = super().paginate_queryset(queryset)
+        if page is not None:
+            self._page_post_ids = [post.post_id for post in page]
+        return page
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        user = self.request.user
+        if getattr(user, "is_authenticated", False) and self._page_post_ids:
+            liked_ids = set(
+                Like.objects.filter(user=user, post_id__in=self._page_post_ids).values_list(
+                    "post_id", flat=True
+                )
+            )
+            context["liked_post_ids"] = liked_ids
+        return context
 
 
 class PostLikedStatusView(APIView):

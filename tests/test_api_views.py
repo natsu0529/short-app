@@ -34,6 +34,9 @@ def test_post_create_uses_authenticated_user(api_client, user):
 
     assert response.status_code == 201
     assert Post.objects.filter(context="new post", user=user).exists()
+    user.stats.refresh_from_db()
+    assert user.stats.post_count == 1
+    assert user.stats.experience_points >= user.stats.POST_CREATE_EXP
 
 
 @pytest.mark.django_db
@@ -112,6 +115,26 @@ def test_user_profile_includes_rank(api_client, user, another_user):
     assert ranks[user.username] == 2
     assert ranks[third.username] == 2
     assert "stats" in response.data[0]
+
+
+@pytest.mark.django_db
+def test_follow_updates_counts(api_client, user, another_user):
+    api_client.force_authenticate(user=user)
+
+    response = api_client.post("/api/follows/", {"aim_user_id": another_user.pk})
+
+    assert response.status_code == 201
+    user.stats.refresh_from_db()
+    another_user.stats.refresh_from_db()
+    assert user.stats.following_count == 1
+    assert another_user.stats.follower_count == 1
+
+    response = api_client.delete(f"/api/follows/{response.data['id']}/")
+    assert response.status_code == 204
+    user.stats.refresh_from_db()
+    another_user.stats.refresh_from_db()
+    assert user.stats.following_count == 0
+    assert another_user.stats.follower_count == 0
 
 
 @pytest.mark.django_db

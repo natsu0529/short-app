@@ -17,6 +17,8 @@ def test_like_create_increments_counts(api_client, user, another_user):
     assert post.like_count == 1
     assert another_user.stats.total_likes_received == 1
     assert user.stats.total_likes_given == 1
+    assert another_user.stats.experience_points >= another_user.stats.LIKE_RECEIVE_EXP
+    assert user.stats.experience_points >= user.stats.LIKE_GAIN_EXP
 
 
 @pytest.mark.django_db
@@ -85,3 +87,17 @@ def test_liked_status_requires_auth(api_client):
     response = api_client.get("/api/posts/liked-status/", {"ids": "1"})
 
     assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_timeline_includes_is_liked(api_client, user):
+    liked_post = PostFactory()
+    LikeFactory(user=user, post=liked_post)
+    api_client.force_authenticate(user=user)
+
+    response = api_client.get("/api/timeline/", {"tab": "latest"})
+
+    assert response.status_code == 200
+    results = response.data["results"]
+    liked_entry = next(item for item in results if item["post_id"] == liked_post.post_id)
+    assert liked_entry["is_liked"] is True

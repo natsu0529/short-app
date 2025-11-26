@@ -84,6 +84,7 @@ class PostSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Post
@@ -94,8 +95,19 @@ class PostSerializer(serializers.ModelSerializer):
             "context",
             "like_count",
             "time",
+            "is_liked",
         ]
-        read_only_fields = ["post_id", "like_count", "time", "user"]
+        read_only_fields = ["post_id", "like_count", "time", "user", "is_liked"]
+
+    def get_is_liked(self, obj):
+        liked_ids = self.context.get("liked_post_ids")
+        if liked_ids is not None:
+            return obj.post_id in liked_ids
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not getattr(user, "is_authenticated", False):
+            return False
+        return Like.objects.filter(user=user, post=obj).exists()
 
 
 class FollowSerializer(serializers.ModelSerializer):

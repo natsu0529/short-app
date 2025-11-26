@@ -2,7 +2,7 @@ import pytest
 from datetime import timedelta
 from django.utils import timezone
 
-from .factories import PostFactory, UserFactory
+from .factories import LikeFactory, PostFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -81,3 +81,16 @@ def test_user_follower_ranking(api_client):
     assert response.status_code == 200
     usernames = [item["username"] for item in response.data["results"]]
     assert usernames[:2] == [first.username, second.username]
+
+
+@pytest.mark.django_db
+def test_post_like_ranking_includes_is_liked(api_client, user):
+    liked = PostFactory()
+    LikeFactory(user=user, post=liked)
+    api_client.force_authenticate(user=user)
+
+    response = api_client.get("/api/rankings/posts/likes/")
+
+    assert response.status_code == 200
+    row = next(item for item in response.data["results"] if item["post_id"] == liked.post_id)
+    assert row["is_liked"] is True

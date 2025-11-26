@@ -21,9 +21,21 @@ class FollowViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        follow = serializer.save(user=self.request.user)
+        follower_stats = getattr(self.request.user, "stats", None)
+        target_stats = getattr(follow.aim_user, "stats", None)
+        if follower_stats:
+            follower_stats.update_follow_counts(following_delta=1)
+        if target_stats:
+            target_stats.update_follow_counts(followers_delta=1)
 
     def perform_destroy(self, instance):
         if instance.user != self.request.user and not self.request.user.is_staff:
             raise PermissionDenied("自分のフォローのみ解除できます。")
+        follower_stats = getattr(instance.user, "stats", None)
+        target_stats = getattr(instance.aim_user, "stats", None)
         instance.delete()
+        if follower_stats:
+            follower_stats.update_follow_counts(following_delta=-1)
+        if target_stats:
+            target_stats.update_follow_counts(followers_delta=-1)

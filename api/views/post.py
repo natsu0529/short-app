@@ -18,7 +18,10 @@ class PostViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        post = serializer.save(user=self.request.user)
+        stats = getattr(self.request.user, "stats", None)
+        if stats:
+            stats.register_post_created()
 
     def perform_update(self, serializer):
         instance = self.get_object()

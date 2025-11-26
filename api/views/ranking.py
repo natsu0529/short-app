@@ -6,7 +6,7 @@ from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 
 from accounts.models import CustomUser
-from post.models import Post
+from post.models import Like, Post
 
 from ..serializers import CustomUserSerializer, PostSerializer
 
@@ -23,6 +23,7 @@ class PostLikeRankingView(ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = RankingPagination
+    _page_post_ids = None
 
     def get_queryset(self):
         qs = Post.objects.select_related("user")
@@ -31,6 +32,24 @@ class PostLikeRankingView(ListAPIView):
             window = timezone.now() - timedelta(hours=24)
             qs = qs.filter(time__gte=window)
         return qs.order_by("-like_count", "-time")
+
+    def paginate_queryset(self, queryset):
+        page = super().paginate_queryset(queryset)
+        if page is not None:
+            self._page_post_ids = [post.post_id for post in page]
+        return page
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        user = self.request.user
+        if getattr(user, "is_authenticated", False) and self._page_post_ids:
+            liked_ids = set(
+                Like.objects.filter(user=user, post_id__in=self._page_post_ids).values_list(
+                    "post_id", flat=True
+                )
+            )
+            context["liked_post_ids"] = liked_ids
+        return context
 
 
 class UserTotalLikesRankingView(ListAPIView):
