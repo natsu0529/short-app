@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "accounts",
     "post",
     "follow",
+    "api",
 ]
 AUTH_USER_MODEL = "accounts.CustomUser"
 MIDDLEWARE = [
