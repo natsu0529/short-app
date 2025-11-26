@@ -1,5 +1,6 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+from django.utils import timezone
 
 
 # Create your models here.
@@ -12,7 +13,7 @@ class Post(models.Model):
     )
     context = models.TextField()
     like_count = models.PositiveIntegerField(default=0)
-    time = models.DateTimeField(auto_now_add=True)
+    time = models.DateTimeField(default=timezone.now)
 
     class Meta:
         db_table = "post"

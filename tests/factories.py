@@ -9,6 +9,7 @@ from post.models import Post
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CustomUser
+        skip_postgeneration_save = True
 
     username = factory.Sequence(lambda n: f"user{n}")
     password = factory.PostGenerationMethodCall("set_password", "testpass123")
