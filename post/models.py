@@ -11,7 +11,7 @@ class Post(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="posts"
     )
     context = models.TextField()
-    good = models.IntegerField(default=0)
+    like_count = models.PositiveIntegerField(default=0)
     time = models.DateTimeField(auto_now_add=True)
 
     class Meta:

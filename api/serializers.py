@@ -1,12 +1,29 @@
 from rest_framework import serializers
 
-from accounts.models import CustomUser
+from accounts.models import CustomUser, UserStats
 from follow.models import Follow
 from post.models import Post
 
 
+class UserStatsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserStats
+        fields = [
+            "experience_points",
+            "total_likes_received",
+            "total_likes_given",
+            "follower_count",
+            "following_count",
+            "post_count",
+            "last_level_up",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
+    stats = UserStatsSerializer(read_only=True)
 
     class Meta:
         model = CustomUser
@@ -18,11 +35,11 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "user_level",
             "user_mail",
             "password",
-            "good",
             "user_URL",
             "user_bio",
+            "stats",
         ]
-        read_only_fields = ["user_id", "good"]
+        read_only_fields = ["user_id", "stats"]
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -59,10 +76,10 @@ class PostSerializer(serializers.ModelSerializer):
             "user",
             "user_id",
             "context",
-            "good",
+            "like_count",
             "time",
         ]
-        read_only_fields = ["post_id", "good", "time", "user"]
+        read_only_fields = ["post_id", "like_count", "time", "user"]
 
 
 class FollowSerializer(serializers.ModelSerializer):
