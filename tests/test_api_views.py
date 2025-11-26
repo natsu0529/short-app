@@ -112,3 +112,23 @@ def test_user_profile_includes_rank(api_client, user, another_user):
     assert ranks[user.username] == 2
     assert ranks[third.username] == 2
     assert "stats" in response.data[0]
+
+
+@pytest.mark.django_db
+def test_users_me_returns_authenticated_user(api_client, user):
+    api_client.force_authenticate(user=user)
+
+    response = api_client.get("/api/users/me/")
+
+    assert response.status_code == 200
+    assert response.data["user_id"] == user.user_id
+    assert response.data["username"] == user.username
+    assert response.data["rank"] == 1
+    assert "stats" in response.data
+
+
+@pytest.mark.django_db
+def test_users_me_requires_authentication(api_client):
+    response = api_client.get("/api/users/me/")
+
+    assert response.status_code == 401
