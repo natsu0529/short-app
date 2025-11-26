@@ -46,3 +46,12 @@ API サーバー内で直接テストを回す必要は無く、常に `api_test
   - `q`: 必須。投稿本文 (`context`) に部分一致 (`ILIKE`) する投稿を検索。
   - ソート順: `like_count` 降順 → `time` 降順。
   - 応答はページネーション付きで `PostSerializer` を返します。
+- Supabase / Cloud Run deployment
+  - 通常のローカル開発では `.env` の Postgres 設定（デフォルトで docker-compose の `db`）を使用します。
+  - 本番や Supabase に切り替える場合は `DATABASE_URL=postgresql://...` を環境変数で渡すと、`dj-database-url` 経由で自動的にその接続情報が使用され、TLS も `ssl_require=True` で強制されます。
+  - Cloud Run で運用する際も `DATABASE_URL` と各種シークレットを環境変数に登録するだけで OK です。
+  - Supabase 上でマイグレーションを一度だけ実行する場合の例:
+    ```bash
+    DATABASE_URL="postgresql://postgres:<PASSWORD>@<host>.supabase.co:5432/postgres?sslmode=require" \
+      python manage.py migrate
+    ```
