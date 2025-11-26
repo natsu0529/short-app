@@ -22,6 +22,7 @@ API サーバー内で直接テストを回す必要は無く、常に `api_test
 - 経験値は投稿作成 (`+10`)、いいねを受け取る (`+5` × 件数)、いいねを送る (`+2` × 件数) のイベントで `UserStats` 経由で付与し、100XP ごとに `CustomUser.user_level` が 1 ずつ上がる仕様です。
 - フォロー/アンフォロー時には `UserStats.update_follow_counts()` を使って `follower_count` と `following_count` を同期させます。
 - これらの値はランキング API（最新・人気・フォロー中タイムラインやランキング 4 タブ）で並び替えやフィルタリングに使用してください。
+- プロフィール API (`/api/users/<id>/`) では `rank` フィールドが 1 始まりの順位として返却され、`stats.total_likes_received` に基づく DenseRank 方式で計算されています。
 
 ## Timeline API
 

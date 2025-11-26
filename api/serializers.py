@@ -24,6 +24,7 @@ class UserStatsSerializer(serializers.ModelSerializer):
 class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
     stats = UserStatsSerializer(read_only=True)
+    rank = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
@@ -38,8 +39,9 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "user_URL",
             "user_bio",
             "stats",
+            "rank",
         ]
-        read_only_fields = ["user_id", "stats"]
+        read_only_fields = ["user_id", "stats", "rank"]
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
@@ -57,6 +59,20 @@ class CustomUserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
+
+    def get_rank(self, obj):
+        rank = getattr(obj, "like_rank", None)
+        if rank is not None:
+            return rank
+        stats = getattr(obj, "stats", None)
+        if not stats:
+            return None
+        from accounts.models import UserStats  # local import to avoid cycle
+
+        better_count = UserStats.objects.filter(
+            total_likes_received__gt=stats.total_likes_received
+        ).count()
+        return better_count + 1
 
 
 class PostSerializer(serializers.ModelSerializer):

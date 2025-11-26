@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from accounts.models import CustomUser
 from follow.models import Follow
 from post.models import Post
 
@@ -93,3 +94,30 @@ def test_timeline_following_requires_auth(api_client, user, another_user):
     response = api_client.get("/api/timeline/", {"tab": "following"})
 
     assert [post["context"] for post in response.data["results"]] == ["followed"]
+
+
+@pytest.mark.django_db
+def test_user_profile_includes_rank(api_client, user, another_user):
+    third = CustomUser.objects.create_user(
+        username="user3",
+        password="pass123",
+        email="user3@example.com",
+        user_name="User Three",
+        user_mail="user3@example.com",
+    )
+
+    another_user.stats.total_likes_received = 15
+    another_user.stats.save()
+    user.stats.total_likes_received = 10
+    user.stats.save()
+    third.stats.total_likes_received = 10
+    third.stats.save()
+
+    response = api_client.get("/api/users/")
+
+    assert response.status_code == 200
+    ranks = {item["username"]: item["rank"] for item in response.data}
+    assert ranks[another_user.username] == 1
+    assert ranks[user.username] == 2
+    assert ranks[third.username] == 2
+    assert "stats" in response.data[0]

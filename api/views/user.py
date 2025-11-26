@@ -1,3 +1,5 @@
+from django.db.models import F, Window
+from django.db.models.functions import DenseRank
 from rest_framework import permissions, viewsets
 from rest_framework.exceptions import PermissionDenied
 
@@ -7,8 +9,18 @@ from ..serializers import CustomUserSerializer
 
 
 class CustomUserViewSet(viewsets.ModelViewSet):
-    queryset = CustomUser.objects.all().order_by("-date_joined")
     serializer_class = CustomUserSerializer
+
+    def get_queryset(self):
+        base_qs = CustomUser.objects.select_related("stats")
+        return base_qs.annotate(
+            like_rank=Window(
+                expression=DenseRank(),
+                order_by=[
+                    F("stats__total_likes_received").desc(nulls_last=True),
+                ],
+            )
+        ).order_by("-stats__total_likes_received", "-date_joined")
 
     def get_permissions(self):
         if self.action == "create":
