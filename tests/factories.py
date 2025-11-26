@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from accounts.models import CustomUser, UserStats
 from follow.models import Follow
-from post.models import Post
+from post.models import Like, Post
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -44,3 +44,12 @@ class FollowFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     aim_user = factory.SubFactory(UserFactory)
+
+
+class LikeFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Like
+        django_get_or_create = ("user", "post")
+
+    user = factory.SubFactory(UserFactory)
+    post = factory.SubFactory(PostFactory)

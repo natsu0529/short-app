@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import CustomUser, UserStats
 from follow.models import Follow
-from post.models import Post
+from post.models import Like, Post
 
 
 class UserStatsSerializer(serializers.ModelSerializer):
@@ -143,5 +143,52 @@ class FollowSerializer(serializers.ModelSerializer):
             existing = existing.exclude(pk=self.instance.pk)
         if existing.exists():
             raise serializers.ValidationError("既にフォロー済みです。")
+        attrs["user"] = user
+        return attrs
+
+
+class LikeSerializer(serializers.ModelSerializer):
+    user = CustomUserSerializer(read_only=True)
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=CustomUser.objects.all(),
+        source="user",
+        write_only=True,
+        required=False,
+        allow_null=True,
+    )
+    post = PostSerializer(read_only=True)
+    post_id = serializers.PrimaryKeyRelatedField(
+        queryset=Post.objects.all(),
+        source="post",
+        write_only=True,
+    )
+
+    class Meta:
+        model = Like
+        fields = [
+            "id",
+            "user",
+            "user_id",
+            "post",
+            "post_id",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at", "user", "post"]
+        validators = []
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        request_user = getattr(request, "user", None)
+        user = attrs.get("user") or (
+            request_user if getattr(request_user, "is_authenticated", False) else None
+        )
+        post = attrs.get("post") or getattr(self.instance, "post", None)
+        if not user or not post:
+            return attrs
+        if self.instance:
+            return attrs
+        exists = Like.objects.filter(user=user, post=post).exists()
+        if exists:
+            raise serializers.ValidationError("既にいいね済みです。")
         attrs["user"] = user
         return attrs

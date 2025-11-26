@@ -21,3 +21,27 @@ class Post(models.Model):
 
     def __str__(self):
         return f"Post {self.post_id} by {self.user}"
+
+
+class Like(models.Model):
+    """User likes on posts."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name="likes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "like"
+        unique_together = ("user", "post")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Like<{self.user_id}:{self.post_id}>"
