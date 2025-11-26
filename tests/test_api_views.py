@@ -1,4 +1,7 @@
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
 
 from follow.models import Follow
 from post.models import Post
@@ -39,3 +42,54 @@ def test_follow_create_blocks_self_follow(api_client, user):
 
     assert response.status_code == 400
     assert not Follow.objects.exists()
+
+
+@pytest.mark.django_db
+def test_timeline_latest_returns_posts_in_order(api_client, user, another_user):
+    old = Post.objects.create(user=user, context="old")
+    new = Post.objects.create(user=another_user, context="new")
+
+    response = api_client.get("/api/timeline/", {"tab": "latest"})
+
+    assert response.status_code == 200
+    results = response.data["results"]
+    assert [post["post_id"] for post in results] == [new.post_id, old.post_id]
+
+
+@pytest.mark.django_db
+def test_timeline_popular_filters_recent_posts_and_orders(api_client, user):
+    within_window_high = Post.objects.create(user=user, context="win high")
+    within_window_high.like_count = 10
+    within_window_high.save(update_fields=["like_count"])
+
+    within_window_low = Post.objects.create(user=user, context="win low")
+    within_window_low.like_count = 2
+    within_window_low.save(update_fields=["like_count"])
+
+    outside_window = Post.objects.create(user=user, context="old popular")
+    outside_window.like_count = 100
+    outside_window.time = timezone.now() - timedelta(hours=30)
+    outside_window.save(update_fields=["like_count", "time"])
+
+    response = api_client.get("/api/timeline/", {"tab": "popular"})
+
+    assert response.status_code == 200
+    contexts = [post["context"] for post in response.data["results"]]
+    assert contexts == ["win high", "win low"]
+
+
+@pytest.mark.django_db
+def test_timeline_following_requires_auth(api_client, user, another_user):
+    Post.objects.create(user=another_user, context="followed")
+    Post.objects.create(user=user, context="own")
+    Follow.objects.create(user=user, aim_user=another_user)
+
+    response = api_client.get("/api/timeline/", {"tab": "following"})
+
+    assert response.status_code == 200
+    assert response.data["results"] == []
+
+    api_client.force_authenticate(user=user)
+    response = api_client.get("/api/timeline/", {"tab": "following"})
+
+    assert [post["context"] for post in response.data["results"]] == ["followed"]

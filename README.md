@@ -34,3 +34,14 @@ API サーバー内で直接テストを回す必要は無く、常に `api_test
 - `tab=latest`: 全投稿を作成日時の降順で返却。
 - `tab=popular`: 直近24時間 (`created_at >= now - 24h`) の投稿を `like_count` → `time` の優先順位で返却。
 - `tab=following`: 認証ユーザがフォローしているユーザの投稿のみを `-time` で返却。未ログインなら空配列。
+
+## Search API
+
+- `GET /api/search/users/`
+  - `q`: 必須。`username` または `user_name` に部分一致 (`ILIKE`) するユーザを検索。
+  - ソート順: `stats.total_likes_received` 降順 → `user_level` 降順 → `date_joined` 降順。
+  - 応答はページネーション付きで `CustomUserSerializer` を返します（`stats` 情報含む）。クエリが空の場合は空結果。
+- `GET /api/search/posts/`
+  - `q`: 必須。投稿本文 (`context`) に部分一致 (`ILIKE`) する投稿を検索。
+  - ソート順: `like_count` 降順 → `time` 降順。
+  - 応答はページネーション付きで `PostSerializer` を返します。
