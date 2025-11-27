@@ -168,5 +168,10 @@ REST_FRAMEWORK = {
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
 
-# Google OAuth設定
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+# Google OAuth設定（iOS/Android それぞれの Client ID）
+GOOGLE_CLIENT_IDS = [
+    os.getenv("GOOGLE_CLIENT_ID_IOS"),
+    os.getenv("GOOGLE_CLIENT_ID_ANDROID"),
+]
+# None を除外
+GOOGLE_CLIENT_IDS = [cid for cid in GOOGLE_CLIENT_IDS if cid]

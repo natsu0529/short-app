@@ -25,16 +25,24 @@ class GoogleAuthView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Google ID Token 検証
-        try:
-            idinfo = id_token.verify_oauth2_token(
-                token,
-                requests.Request(),
-                settings.GOOGLE_CLIENT_ID,
-            )
-        except ValueError as e:
+        # Google ID Token 検証（iOS/Android 両方の Client ID で試行）
+        idinfo = None
+        last_error = None
+        for client_id in settings.GOOGLE_CLIENT_IDS:
+            try:
+                idinfo = id_token.verify_oauth2_token(
+                    token,
+                    requests.Request(),
+                    client_id,
+                )
+                break  # 検証成功
+            except ValueError as e:
+                last_error = e
+                continue
+
+        if idinfo is None:
             return Response(
-                {"error": f"Invalid token: {str(e)}"},
+                {"error": f"Invalid token: {str(last_error)}"},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
