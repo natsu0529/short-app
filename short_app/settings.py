@@ -27,7 +27,11 @@ SECRET_KEY = "django-insecure-&0czzd)d69@1+4c9o1it^0hgf)#(s=sot5pe#med9*fbf5%ua=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# ローカル開発用：エミュレーターやWifi経由の接続を許可
+ALLOWED_HOSTS = ['*']
+
+# CORS設定：フロントエンドからのアクセスを許可（開発用）
+CORS_ALLOW_ALL_ORIGINS = True
 
 
 # Application definition
@@ -39,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
     "accounts",
     "post",
@@ -49,6 +54,7 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -79,25 +85,34 @@ WSGI_APPLICATION = "short_app.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.getenv("POSTGRES_DB", "sns_db"),
-        "USER": os.getenv("POSTGRES_USER", "sns_user"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", "sns_password"),
-        "HOST": os.getenv("POSTGRES_HOST", "db"),
-        "PORT": os.getenv("POSTGRES_PORT", "5432"),
-        "OPTIONS": {},
+# ローカル開発用：USE_SQLITE=1 で SQLite を使用
+if os.getenv("USE_SQLITE"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.postgresql"),
+            "NAME": os.getenv("POSTGRES_DB", "sns_db"),
+            "USER": os.getenv("POSTGRES_USER", "sns_user"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", "sns_password"),
+            "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+            "PORT": os.getenv("POSTGRES_PORT", "5432"),
+            "OPTIONS": {},
+        }
+    }
 
-database_url = os.getenv("DATABASE_URL")
-if database_url:
-    DATABASES["default"] = dj_database_url.config(
-        default=database_url,
-        conn_max_age=600,
-        ssl_require=True,
-    )
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        DATABASES["default"] = dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            ssl_require=True,
+        )
 
 
 # Password validation
