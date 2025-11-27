@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
+    "rest_framework.authtoken",
     "accounts",
     "post",
     "follow",
@@ -161,7 +162,11 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ],
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
 }
+
+# Google OAuth設定
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")

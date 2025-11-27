@@ -16,6 +16,7 @@ from .views import (
     UserSearchView,
     UserTotalLikesRankingView,
 )
+from .views.auth import GoogleAuthView
 
 router = DefaultRouter()
 router.register("users", CustomUserViewSet, basename="user")
@@ -24,6 +25,7 @@ router.register("follows", FollowViewSet, basename="follow")
 router.register("likes", LikeViewSet, basename="like")
 
 urlpatterns = [
+    path("auth/google/", GoogleAuthView.as_view(), name="google-auth"),
     path("posts/liked-status/", PostLikedStatusView.as_view(), name="post-liked-status"),
     path("users/<int:user_id>/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),
     path("rankings/posts/likes/", PostLikeRankingView.as_view(), name="post-like-ranking"),

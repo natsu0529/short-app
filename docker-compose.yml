@@ -17,6 +17,11 @@ services:
       - .:/app
     ports:
       - "8000:8000"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=sns_db
+      - POSTGRES_USER=sns_user
+      - POSTGRES_PASSWORD=sns_password
     depends_on:
       - db
 
@@ -25,6 +30,11 @@ services:
     command: pytest
     volumes:
       - .:/app
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=sns_db
+      - POSTGRES_USER=sns_user
+      - POSTGRES_PASSWORD=sns_password
     depends_on:
       - db
 
