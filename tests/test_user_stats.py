@@ -14,12 +14,13 @@ def test_user_stats_auto_created(user):
 def test_user_stats_level_up_and_experience(user):
     stats = user.stats
 
-    stats.gain_experience(stats.LEVEL_UP_STEP)
+    # 新アルゴリズム: 10 EXPでレベル2
+    stats.gain_experience(10)
     stats.refresh_from_db()
     user.refresh_from_db()
 
-    assert stats.experience_points == stats.LEVEL_UP_STEP
-    assert user.user_level >= 2
+    assert stats.experience_points == 10
+    assert user.user_level == 2
     assert stats.last_level_up is not None
 
 

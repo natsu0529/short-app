@@ -20,10 +20,66 @@ class CustomUser(AbstractUser):
 class UserStats(models.Model):
     """Aggregated counters that power ranking features."""
 
-    LEVEL_UP_STEP = 100
     LIKE_GAIN_EXP = 2
     LIKE_RECEIVE_EXP = 5
     POST_CREATE_EXP = 10
+
+    # レベルごとの必要経験値閾値
+    # レベル1: 0, レベル2: 10, レベル3: 30, レベル4: 60, レベル5: 100
+    # レベル6-10: 50ずつ増加 (150, 200, 250, 300, 350)
+    # レベル11-20: 100ずつ増加 (450, 550, ..., 1350)
+    # レベル21-50: 200ずつ増加 (1550, 1750, ..., 7350)
+    # レベル51-100: 300ずつ増加 (7650, 7950, ..., 22350)
+    # レベル101以降: 500ずつ増加
+
+    @staticmethod
+    def calculate_level_from_exp(exp: int) -> int:
+        """経験値からレベルを計算する"""
+        if exp < 10:
+            return 1
+        if exp < 30:
+            return 2
+        if exp < 60:
+            return 3
+        if exp < 100:
+            return 4
+        if exp < 150:
+            return 5
+
+        # レベル6-9: 50ずつ (150, 200, 250, 300)
+        if exp < 350:
+            return 6 + (exp - 150) // 50
+
+        # レベル10: 350-449
+        if exp < 450:
+            return 10
+
+        # レベル11-20: 100ずつ (450, 550, ..., 1350)
+        if exp < 1450:
+            return 11 + (exp - 450) // 100
+
+        # レベル20: 1350-1549
+        if exp < 1550:
+            return 20
+
+        # レベル21-50: 200ずつ (1550, 1750, ..., 7350)
+        if exp < 7350:
+            return 21 + (exp - 1550) // 200
+
+        # レベル50: 7150-7649
+        if exp < 7650:
+            return 50
+
+        # レベル51-100: 300ずつ (7650, 7950, ..., 22350)
+        if exp < 22350:
+            return 51 + (exp - 7650) // 300
+
+        # レベル100: 22050-22849
+        if exp < 22850:
+            return 100
+
+        # レベル101以降: 500ずつ
+        return 101 + (exp - 22850) // 500
 
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -48,7 +104,7 @@ class UserStats(models.Model):
     def _apply_level_up_if_needed(self):
         if not hasattr(self, "user"):
             return
-        expected_level = max(1, self.experience_points // self.LEVEL_UP_STEP + 1)
+        expected_level = self.calculate_level_from_exp(self.experience_points)
         if expected_level > self.user.user_level:
             self.user.user_level = expected_level
             self.user.save(update_fields=["user_level"])
