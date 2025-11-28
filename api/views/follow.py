@@ -1,3 +1,4 @@
+from django.db.models import F
 from rest_framework import permissions, viewsets
 from rest_framework.exceptions import PermissionDenied
 
@@ -12,6 +13,8 @@ class FollowViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Follow.objects.select_related("user", "aim_user").all()
+        # 自分自身をフォローしているレコードを除外
+        queryset = queryset.exclude(user_id=F("aim_user_id"))
         user_id = self.request.query_params.get("user_id")
         aim_user_id = self.request.query_params.get("aim_user_id")
         if user_id:
