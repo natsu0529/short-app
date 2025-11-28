@@ -176,3 +176,7 @@ GOOGLE_CLIENT_IDS = [
 ]
 # None を除外
 GOOGLE_CLIENT_IDS = [cid for cid in GOOGLE_CLIENT_IDS if cid]
+
+# Firebase Cloud Messaging設定
+# サービスアカウントJSONファイルへのパス
+FIREBASE_CREDENTIALS_PATH = os.getenv("FIREBASE_CREDENTIALS_PATH")

@@ -32,6 +32,19 @@ class FollowViewSet(viewsets.ModelViewSet):
         if target_stats:
             target_stats.update_follow_counts(followers_delta=1)
 
+        # Send push notification
+        from ..services.notifications import (
+            check_and_notify_user_follower_ranking,
+            notify_followed,
+        )
+
+        notify_followed(
+            target_user_id=follow.aim_user.user_id,
+            follower_username=self.request.user.username,
+        )
+        # Check follower ranking notification
+        check_and_notify_user_follower_ranking(follow.aim_user.user_id)
+
     def perform_destroy(self, instance):
         if instance.user != self.request.user and not self.request.user.is_staff:
             raise PermissionDenied("自分のフォローのみ解除できます。")

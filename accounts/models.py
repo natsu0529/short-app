@@ -106,9 +106,20 @@ class UserStats(models.Model):
             return
         expected_level = self.calculate_level_from_exp(self.experience_points)
         if expected_level > self.user.user_level:
+            old_level = self.user.user_level
             self.user.user_level = expected_level
             self.user.save(update_fields=["user_level"])
             self.last_level_up = timezone.now()
+
+            # Send push notification for level up
+            from api.services.notifications import (
+                check_and_notify_user_level_ranking,
+                notify_level_up,
+            )
+
+            notify_level_up(user_id=self.user.user_id, new_level=expected_level)
+            # Check level ranking notification
+            check_and_notify_user_level_ranking(self.user.user_id)
 
     def gain_experience(self, points: int):
         if points <= 0:
@@ -152,3 +163,31 @@ def ensure_user_stats(sender, instance: CustomUser, created: bool, **_: object):
         UserStats.objects.create(user=instance)
     else:
         UserStats.objects.get_or_create(user=instance)
+
+
+class DeviceToken(models.Model):
+    """FCM device tokens for push notifications."""
+
+    PLATFORM_IOS = "ios"
+    PLATFORM_ANDROID = "android"
+    PLATFORM_CHOICES = [
+        (PLATFORM_IOS, "iOS"),
+        (PLATFORM_ANDROID, "Android"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="device_tokens",
+    )
+    token = models.CharField(max_length=255, unique=True)
+    platform = models.CharField(max_length=10, choices=PLATFORM_CHOICES)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "device_tokens"
+
+    def __str__(self) -> str:
+        return f"DeviceToken<{self.user_id}:{self.platform}>"

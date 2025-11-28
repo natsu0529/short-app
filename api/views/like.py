@@ -44,6 +44,24 @@ class LikeViewSet(
             if liker_stats:
                 liker_stats.register_like_given(value=1)
 
+        # Send push notification (outside transaction)
+        post_author = like.post.user
+        if post_author.user_id != self.request.user.user_id:
+            from ..services.notifications import (
+                check_and_notify_post_ranking,
+                check_and_notify_user_likes_ranking,
+                notify_liked,
+            )
+
+            notify_liked(
+                post_author_id=post_author.user_id,
+                liker_username=self.request.user.username,
+                post_context=like.post.context or "",
+            )
+            # Check ranking notifications
+            check_and_notify_post_ranking(like.post.post_id, post_author.user_id)
+            check_and_notify_user_likes_ranking(post_author.user_id)
+
     def perform_destroy(self, instance):
         user = self.request.user
         if instance.user != user and not user.is_staff:

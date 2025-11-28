@@ -10,6 +10,7 @@ from .ranking import (
     UserLevelRankingView,
     UserTotalLikesRankingView,
 )
+from .device_token import DeviceTokenView
 
 __all__ = [
     "CustomUserViewSet",
@@ -25,4 +26,5 @@ __all__ = [
     "UserTotalLikesRankingView",
     "UserLevelRankingView",
     "UserFollowerRankingView",
+    "DeviceTokenView",
 ]

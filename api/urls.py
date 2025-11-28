@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     CustomUserViewSet,
+    DeviceTokenView,
     FollowViewSet,
     LikeViewSet,
     LikedPostsView,
@@ -26,6 +27,7 @@ router.register("likes", LikeViewSet, basename="like")
 
 urlpatterns = [
     path("auth/google/", GoogleAuthView.as_view(), name="google-auth"),
+    path("device-token/", DeviceTokenView.as_view(), name="device-token"),
     path("posts/liked-status/", PostLikedStatusView.as_view(), name="post-liked-status"),
     path("users/<int:user_id>/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),
     path("rankings/posts/likes/", PostLikeRankingView.as_view(), name="post-like-ranking"),
