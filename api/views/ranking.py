@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from django.db.models import F, Window
+from django.db.models.functions import Rank
 from django.utils import timezone
 from rest_framework import permissions
 from rest_framework.generics import ListAPIView
@@ -60,6 +62,15 @@ class UserTotalLikesRankingView(ListAPIView):
     def get_queryset(self):
         return (
             CustomUser.objects.select_related("stats")
+            .annotate(
+                like_rank=Window(
+                    expression=Rank(),
+                    order_by=[
+                        F("stats__total_likes_received").desc(),
+                        F("date_joined").asc(),
+                    ],
+                )
+            )
             .order_by("-stats__total_likes_received", "-date_joined")
         )
 
