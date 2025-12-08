@@ -5,7 +5,7 @@ from django.db.models.functions import Rank
 from django.utils import timezone
 from rest_framework import permissions
 from rest_framework.generics import ListAPIView
-from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import CursorPagination, PageNumberPagination
 
 from accounts.models import CustomUser
 from post.models import Like, Post
@@ -13,7 +13,17 @@ from post.models import Like, Post
 from ..serializers import CustomUserSerializer, PostSerializer
 
 
-class RankingPagination(PageNumberPagination):
+class RankingCursorPagination(CursorPagination):
+    """Cursor-based pagination for post rankings."""
+
+    page_size = 20
+    ordering = ("-like_count", "-post_id")
+    cursor_query_param = "cursor"
+
+
+class UserRankingPagination(PageNumberPagination):
+    """Page-based pagination for user rankings (Window関数との互換性のため)."""
+
     page_size = 20
     page_size_query_param = "page_size"
     max_page_size = 100
@@ -24,7 +34,7 @@ class PostLikeRankingView(ListAPIView):
 
     serializer_class = PostSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = RankingPagination
+    pagination_class = RankingCursorPagination
     _page_post_ids = None
 
     def get_queryset(self):
@@ -33,7 +43,7 @@ class PostLikeRankingView(ListAPIView):
         if range_param == "24h":
             window = timezone.now() - timedelta(hours=24)
             qs = qs.filter(time__gte=window)
-        return qs.order_by("-like_count", "-time")
+        return qs.order_by("-like_count", "-post_id")
 
     def paginate_queryset(self, queryset):
         page = super().paginate_queryset(queryset)
@@ -57,7 +67,7 @@ class PostLikeRankingView(ListAPIView):
 class UserTotalLikesRankingView(ListAPIView):
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = RankingPagination
+    pagination_class = UserRankingPagination
 
     def get_queryset(self):
         return (
@@ -78,7 +88,7 @@ class UserTotalLikesRankingView(ListAPIView):
 class UserLevelRankingView(ListAPIView):
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = RankingPagination
+    pagination_class = UserRankingPagination
 
     def get_queryset(self):
         return CustomUser.objects.select_related("stats").order_by(
@@ -89,7 +99,7 @@ class UserLevelRankingView(ListAPIView):
 class UserFollowerRankingView(ListAPIView):
     serializer_class = CustomUserSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = RankingPagination
+    pagination_class = UserRankingPagination
 
     def get_queryset(self):
         return (

@@ -18,6 +18,11 @@ class Post(models.Model):
     class Meta:
         db_table = "post"
         ordering = ["-time"]
+        indexes = [
+            models.Index(fields=["-post_id"], name="post_latest_idx"),
+            models.Index(fields=["-like_count", "-post_id"], name="post_ranking_idx"),
+            models.Index(fields=["-time"], name="post_time_idx"),
+        ]
 
     def __str__(self):
         return f"Post {self.post_id} by {self.user}"
@@ -42,6 +47,9 @@ class Like(models.Model):
         db_table = "like"
         unique_together = ("user", "post")
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "post"], name="like_user_post_idx"),
+        ]
 
     def __str__(self):
         return f"Like<{self.user_id}:{self.post_id}>"
