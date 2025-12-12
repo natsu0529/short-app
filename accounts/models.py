@@ -15,6 +15,7 @@ class CustomUser(AbstractUser):
     password = models.CharField(max_length=128)  # AbstractUser ですでにあるので省略可
     user_URL = models.URLField(blank=True)
     user_bio = models.TextField(blank=True)
+    apple_user_id = models.CharField(max_length=255, unique=True, null=True, blank=True, db_index=True)
 
 
 class UserStats(models.Model):

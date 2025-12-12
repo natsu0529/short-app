@@ -17,7 +17,7 @@ from .views import (
     UserSearchView,
     UserTotalLikesRankingView,
 )
-from .views.auth import GoogleAuthView
+from .views.auth import AppleAuthView, GoogleAuthView
 
 router = DefaultRouter()
 router.register("users", CustomUserViewSet, basename="user")
@@ -27,6 +27,7 @@ router.register("likes", LikeViewSet, basename="like")
 
 urlpatterns = [
     path("auth/google/", GoogleAuthView.as_view(), name="google-auth"),
+    path("auth/apple/", AppleAuthView.as_view(), name="apple-auth"),
     path("device-token/", DeviceTokenView.as_view(), name="device-token"),
     path("posts/liked-status/", PostLikedStatusView.as_view(), name="post-liked-status"),
     path("users/<int:user_id>/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),

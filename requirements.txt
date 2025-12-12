@@ -9,3 +9,5 @@ pytest-django
 factory_boy
 dj-database-url
 factory_boy
+PyJWT>=2.8
+cryptography>=41.0
