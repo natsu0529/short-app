@@ -14,6 +14,8 @@ ShortSNS は短文投稿型SNSのバックエンドAPIです。
 
 | カテゴリ | エンドポイント | 説明 |
 |----------|----------------|------|
+| **認証** | `/api/auth/google/`, `/api/auth/apple/` | Google・Apple認証 |
+| **デバイストークン** | `/api/device-token/` | プッシュ通知用トークン管理 |
 | **ユーザー** | `/api/users/` | ユーザーCRUD |
 | **投稿** | `/api/posts/` | 投稿CRUD |
 | **フォロー** | `/api/follows/` | フォロー管理 |
@@ -93,6 +95,7 @@ Authorization: Token <your-token>
 | `user_mail` | string | メールアドレス |
 | `user_URL` | string | プロフィールURL |
 | `user_bio` | string | 自己紹介 |
+| `apple_user_id` | string | Apple認証用ID（内部管理用、非公開） |
 | `stats` | object | 統計情報 |
 | `rank` | integer | いいねランキング順位 |
 
@@ -168,6 +171,8 @@ Authorization: Token <your-token>
 
 ## 詳細ドキュメント
 
+- [認証API](api/auth.md)
+- [デバイストークンAPI](api/device-token.md)
 - [ユーザーAPI](api/users.md)
 - [投稿API](api/posts.md)
 - [フォローAPI](api/follows.md)
