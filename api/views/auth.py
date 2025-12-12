@@ -118,18 +118,27 @@ class AppleAuthView(APIView):
         if not public_key:
             raise ValueError("Public key not found for the given kid")
 
-        # トークンを検証
-        try:
-            decoded = jwt.decode(
-                identity_token,
-                public_key,
-                algorithms=["RS256"],
-                audience=getattr(settings, "APPLE_BUNDLE_ID", "com.suzukioff.shortAppFront"),
-                issuer="https://appleid.apple.com",
-            )
-            return decoded
-        except jwt.InvalidTokenError as e:
-            raise ValueError(f"Invalid token: {e}")
+        # トークンを検証（複数のClient IDで試行）
+        decoded = None
+        last_error = None
+        for client_id in settings.APPLE_CLIENT_IDS:
+            try:
+                decoded = jwt.decode(
+                    identity_token,
+                    public_key,
+                    algorithms=["RS256"],
+                    audience=client_id,
+                    issuer="https://appleid.apple.com",
+                )
+                break  # 検証成功
+            except jwt.InvalidTokenError as e:
+                last_error = e
+                continue
+
+        if decoded is None:
+            raise ValueError(f"Invalid token: {str(last_error)}")
+
+        return decoded
 
     def post(self, request):
         identity_token = request.data.get("identity_token")

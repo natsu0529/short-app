@@ -143,7 +143,7 @@ Apple Identity Tokenを検証してAPIトークンを発行します。
 
 1. Apple Identity Tokenを検証
    - Appleの公開鍵を取得してJWT署名を検証
-   - Bundle ID（`com.suzukioff.shortAppFront`）を確認
+   - Client ID（Bundle ID/Service ID）を確認（iOS/Web両対応）
    - issuerが`https://appleid.apple.com`であることを確認
 2. トークン内の`sub`（AppleユーザーID）と`user_id`が一致するか確認
 3. `apple_user_id`でユーザーを検索、存在しない場合は新規作成
@@ -187,7 +187,8 @@ curl -H "Authorization: Token a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6" \
 ### Sign in with Apple
 
 - Appleの公開鍵を使用したJWT署名検証
-- Bundle IDとissuerの厳密な検証
+- Client ID（Bundle ID/Service ID）とissuerの厳密な検証
+- 複数のClient ID（iOS/Web）に対応
 - トークンの有効期限を自動チェック
 - 改ざん防止のための暗号学的検証
 
